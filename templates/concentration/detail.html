@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Session Detail — TaskNavigation{% endblock %}
+{% block nav_concentration %}active{% endblock %}
+
+{% block content %}
+<div class="page" style="max-width:860px;">
+
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+    <a href="{% url 'concentration:list' %}" class="btn btn-ghost btn-sm">← Back</a>
+    <h1 style="font-size:1.125rem;font-weight:700;">Session — {{ log.record_date|date:"Y-m-d H:i" }}</h1>
+  </div>
+
+  <!-- Summary row -->
+  <div class="stat-grid" style="margin-bottom:24px;">
+    <div class="stat-card stat-focus">
+      <span class="stat-label">Average Score</span>
+      <span class="stat-value">{{ log.average_score|floatformat:1 }}</span>
+      <span class="stat-sub">{{ log.score_label }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Duration</span>
+      <span class="stat-value" style="color:var(--text-primary);">{{ log.duration_minutes }}</span>
+      <span class="stat-sub">minutes</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Max Score</span>
+      <span class="stat-value" style="color:var(--color-success);">{{ log.max_score|floatformat:1 }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Min Score</span>
+      <span class="stat-value" style="color:var(--color-danger);">{{ log.min_score|floatformat:1 }}</span>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+
+    <!-- Sub-metrics -->
+    <div class="card">
+      <div class="card-header"><h2 class="section-title" style="margin:0;">Metrics</h2></div>
+      <div class="card-body">
+        <div class="metric-grid">
+          <div class="metric-item">
+            <div class="metric-name">Gaze Stability</div>
+            <div class="metric-value">{% if log.gaze_stability_avg is not None %}{{ log.gaze_stability_avg|floatformat:1 }}{% else %}—{% endif %}</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-name">Face Direction</div>
+            <div class="metric-value">{% if log.face_direction_avg is not None %}{{ log.face_direction_avg|floatformat:1 }}{% else %}—{% endif %}</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-name">Posture</div>
+            <div class="metric-value">{% if log.posture_score_avg is not None %}{{ log.posture_score_avg|floatformat:1 }}{% else %}—{% endif %}</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-name">Center Focus</div>
+            <div class="metric-value">{% if log.center_focus_avg is not None %}{{ log.center_focus_avg|floatformat:1 }}{% else %}—{% endif %}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Focus items -->
+    <div class="card">
+      <div class="card-header"><h2 class="section-title" style="margin:0;">Focus Items</h2></div>
+      <div class="card-body">
+        {% if log.focus_items %}
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            {% for item in log.focus_items %}
+              <span class="badge badge-progress" style="font-size:.8125rem;padding:6px 14px;">
+                {{ item.name }}
+              </span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="color:var(--text-muted);font-size:.875rem;">No focus items selected.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Score timeline -->
+  {% if score_records %}
+    <div class="card">
+      <div class="card-header"><h2 class="section-title" style="margin:0;">Score Timeline (5-min intervals)</h2></div>
+      <div class="card-body">
+        <div class="score-chart-bar">
+          {% for record in score_records %}
+            <div class="chart-row">
+              <span class="chart-label">{{ record.minute }}m</span>
+              <div class="chart-bar-track">
+                <div class="chart-bar-fill" style="width:{{ record.score }}%;"></div>
+              </div>
+              <span class="chart-value">{{ record.score|floatformat:1 }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Delete -->
+  <div style="margin-top:20px;display:flex;justify-content:flex-end;">
+    <form method="post" action="{% url 'concentration:delete' log.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger btn-sm"
+              onclick="return confirm('Delete this session? This cannot be undone.');">
+        Delete Session
+      </button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

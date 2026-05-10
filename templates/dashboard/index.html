@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — TaskNavigation{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="page">
+
+  <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:8px;">Good to see you, {{ user.name }} 👋</h2>
+  <p style="color:var(--text-secondary);margin-bottom:28px;font-size:.9rem;">Here's an overview of your work today.</p>
+
+  <!-- Stat cards -->
+  <div class="stat-grid">
+    <div class="stat-card stat-todo">
+      <span class="stat-label">Todo</span>
+      <span class="stat-value">{{ task_counts.todo }}</span>
+      <span class="stat-sub">tasks waiting</span>
+    </div>
+    <div class="stat-card stat-progress">
+      <span class="stat-label">In Progress</span>
+      <span class="stat-value">{{ task_counts.in_progress }}</span>
+      <span class="stat-sub">tasks active</span>
+    </div>
+    <div class="stat-card stat-review">
+      <span class="stat-label">Review</span>
+      <span class="stat-value">{{ task_counts.review }}</span>
+      <span class="stat-sub">tasks to check</span>
+    </div>
+    <div class="stat-card stat-done">
+      <span class="stat-label">Done</span>
+      <span class="stat-value">{{ task_counts.done }}</span>
+      <span class="stat-sub">tasks completed</span>
+    </div>
+    <div class="stat-card stat-focus">
+      <span class="stat-label">Focus Score</span>
+      <span class="stat-value">{% if weekly_avg %}{{ weekly_avg }}{% else %}—{% endif %}</span>
+      <span class="stat-sub">7-day average</span>
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <div style="display:flex;gap:12px;margin-bottom:32px;flex-wrap:wrap;">
+    <a href="{% url 'tasks:kanban' %}" class="btn btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Open Kanban Board
+    </a>
+    <a href="{% url 'concentration:measure' %}" class="btn btn-ghost">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Start Focus Session
+    </a>
+  </div>
+
+  <!-- Two-column section -->
+  <div class="dashboard-grid">
+
+    <!-- Overdue tasks -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="section-title" style="margin:0;">⚠️ Overdue Tasks</h3>
+        <a href="{% url 'tasks:kanban' %}" class="btn btn-ghost btn-sm">View all</a>
+      </div>
+      <div class="card-body">
+        {% if overdue_tasks %}
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:10px;">
+            {% for task in overdue_tasks %}
+              <li style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <span style="font-size:.875rem;font-weight:500;">{{ task.title }}</span>
+                <span style="font-size:.8125rem;color:var(--color-danger);white-space:nowrap;">{{ task.due_date }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="empty-state" style="padding:24px;">
+            <p>No overdue tasks. Keep it up!</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Recent concentration logs -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="section-title" style="margin:0;">🎯 Recent Focus Sessions</h3>
+        <a href="{% url 'concentration:list' %}" class="btn btn-ghost btn-sm">View all</a>
+      </div>
+      <div class="card-body">
+        {% if recent_logs %}
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:10px;">
+            {% for log in recent_logs %}
+              <li style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <div>
+                  <span style="font-size:.875rem;font-weight:500;">{{ log.record_date|date:"M d, Y H:i" }}</span>
+                  <span style="display:block;font-size:.8rem;color:var(--text-secondary);">{{ log.duration_minutes }} min</span>
+                </div>
+                <a href="{% url 'concentration:detail' log.pk %}"
+                   class="score-pill score-{{ log.score_label|lower }}">
+                  {{ log.average_score|floatformat:1 }}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="empty-state" style="padding:24px;">
+            <p>No focus sessions yet. <a href="{% url 'concentration:measure' %}" style="color:var(--color-primary);">Start one!</a></p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Focus Tracker — TaskNavigation{% endblock %}
+{% block nav_concentration %}active{% endblock %}
+
+{% block content %}
+<div class="measure-layout">
+
+  <!-- Left: Camera feed -->
+  <div class="camera-wrapper" id="cameraWrapper">
+    <video id="webcam" autoplay playsinline muted></video>
+    <canvas id="output-canvas"></canvas>
+
+    <!-- Camera overlay HUD (shown while measuring) -->
+    <div class="camera-hud" id="cameraHud" style="display:none;">
+      <div class="hud-item">
+        <div class="hud-label">Score</div>
+        <div class="hud-value" id="hudScore">—</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">Gaze Stability</div>
+        <div class="hud-value" id="hudGaze">—</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">Elapsed</div>
+        <div class="hud-value" id="hudTime">0:00</div>
+      </div>
+    </div>
+
+    <!-- Camera placeholder (before camera starts) -->
+    <div id="cameraPlaceholder" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#aaa;gap:16px;background:#111;">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      <p style="font-size:.9rem;">Camera will start when you begin a session.</p>
+    </div>
+  </div>
+
+  <!-- Right: Controls panel -->
+  <div class="measure-panel">
+
+    <!-- Score ring -->
+    <div class="card">
+      <div class="score-ring-wrapper">
+        <div class="score-ring" id="scoreRing" style="--pct:0;">
+          <div class="score-ring-inner">
+            <div class="score-ring-value" id="scoreValue">—</div>
+            <div class="score-ring-label">Focus Score</div>
+          </div>
+        </div>
+        <p style="font-size:.8125rem;color:var(--text-secondary);margin-top:12px;" id="scoreStatus">Press Start to begin a session.</p>
+      </div>
+    </div>
+
+    <!-- Focus items -->
+    <div class="card">
+      <div class="card-header" style="margin-bottom:12px;">
+        <h3 style="font-size:.9375rem;font-weight:700;">What are you focusing on?</h3>
+      </div>
+      <div class="card-body" style="padding-top:0;">
+        <div class="focus-items-grid" id="focusItemsGrid">
+          {% for item in focus_items %}
+            <label class="focus-chip" data-id="{{ item.id }}" data-name="{{ item.name }}">
+              {{ item.name }}
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub-metrics -->
+    <div class="card" id="metricsCard" style="display:none;">
+      <div class="card-body">
+        <div class="metric-grid">
+          <div class="metric-item">
+            <div class="metric-name">Gaze Stability</div>
+            <div class="metric-value" id="metGaze">—</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-name">Face Direction</div>
+            <div class="metric-value" id="metFace">—</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-name">Posture</div>
+            <div class="metric-value" id="metPosture">—</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-name">Center Focus</div>
+            <div class="metric-value" id="metCenter">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Score history (last 5 snapshots) -->
+    <div class="card" id="historyCard" style="display:none;">
+      <div class="card-header" style="margin-bottom:12px;">
+        <h3 style="font-size:.9375rem;font-weight:700;">5-min snapshots</h3>
+      </div>
+      <div class="card-body" style="padding-top:0;">
+        <div class="score-chart-bar" id="historyBars"></div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="measure-controls">
+      <button class="btn btn-primary btn-lg" id="startBtn">▶ Start Session</button>
+      <button class="btn btn-ghost btn-lg" id="stopBtn" style="display:none;">⏹ Finish &amp; Save</button>
+    </div>
+    <p style="text-align:center;font-size:.8rem;color:var(--text-muted);">Your camera feed is processed locally — nothing is uploaded.</p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/concentration.js' %}"></script>
+{% endblock %}

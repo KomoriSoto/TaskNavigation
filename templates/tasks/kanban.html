@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Kanban Board — TaskNavigation{% endblock %}
+{% block nav_tasks %}active{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<!-- Task Create/Edit Modal -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">Add Task</h2>
+      <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+    </div>
+    <form id="taskForm" novalidate>
+      {% csrf_token %}
+      <input type="hidden" id="taskId" value="" />
+      <div class="form-group">
+        <label class="form-label" for="taskTitle">Title <span style="color:var(--color-danger)">*</span></label>
+        <input class="form-input" type="text" id="taskTitle" name="title" placeholder="Task title" maxlength="200" required />
+        <p class="form-error" id="titleError" style="display:none;"></p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="taskDescription">Description</label>
+        <textarea class="form-input" id="taskDescription" name="description" placeholder="Optional notes…" rows="3"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group">
+          <label class="form-label" for="taskStatus">Status</label>
+          <select class="form-select" id="taskStatus" name="status">
+            <option value="todo">Todo</option>
+            <option value="in_progress">In Progress</option>
+            <option value="review">Review</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="taskPriority">Priority</label>
+          <select class="form-select" id="taskPriority" name="priority">
+            <option value="1">Low</option>
+            <option value="2" selected>Medium</option>
+            <option value="3">High</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="taskDueDate">Due Date</label>
+        <input class="form-input" type="date" id="taskDueDate" name="due_date" />
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+        <button type="button" class="btn btn-ghost" id="modalCancelBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="modalSubmitBtn">Save task</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Delete task?</h2>
+      <button class="modal-close" id="deleteModalClose">&times;</button>
+    </div>
+    <p style="color:var(--text-secondary);font-size:.9rem;margin-bottom:24px;">This action cannot be undone.</p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" id="deleteCancelBtn">Cancel</button>
+      <button class="btn btn-danger" id="deleteConfirmBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Board header -->
+<div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;">
+  <h1 style="font-size:1.25rem;font-weight:700;">Kanban Board</h1>
+  <button class="btn btn-primary btn-sm" id="openCreateModal">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    New Task
+  </button>
+</div>
+
+<!-- Kanban columns -->
+<div class="kanban-board">
+
+  {% for col in columns %}
+  <div class="kanban-column {{ col.css }}" data-status="{{ col.key }}">
+    <div class="kanban-column-header">
+      <div class="kanban-column-title">
+        <span class="column-dot"></span>
+        {{ col.label }}
+      </div>
+      <span class="column-count" id="count-{{ col.key }}">{{ col.tasks|length }}</span>
+    </div>
+    <div class="kanban-cards" id="cards-{{ col.key }}">
+      {% for task in col.tasks %}
+        {% include 'tasks/_task_card.html' with task=task %}
+      {% endfor %}
+    </div>
+    <button class="btn-add-card" data-status="{{ col.key }}">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add task
+    </button>
+  </div>
+  {% endfor %}
+
+</div>
+
+<script src="{% static 'js/kanban.js' %}"></script>
+{% endblock %}
